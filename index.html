@@ -150,7 +150,7 @@
         </div>
         <div class="field">
           <label for="organizers">企画者名<span class="req">必須</span></label>
-          <input type="text" id="organizers" placeholder="例：あすまろ　／　複数なら「m o g u・雨部冷キザミ」のように「・」区切り">
+          <input type="text" id="organizers" placeholder="例：TUちゃん　／　複数なら「TUちゃん・○○ちゃん」のように「・」区切り">
           <div class="hint">本文中の「企画者（○○）」に入ります。2人以上なら「共同企画」の表記になります</div>
         </div>
         <div class="field mention-list">
@@ -642,33 +642,33 @@
 
   function fillSample() {
     var s = {
-      jamName: 'まろジャム',
-      organizers: 'あすまろ',
+      jamName: '野良ジャム',
+      organizers: 'TUちゃん',
       mentions: '',
-      showTitle: true,
-      showDuration: false,
-      purpose: '「平日5日間規模」でゲーム作ってみませんか！',
-      concept: '平日作業できる人向け、ボイスで効果音や曲を使ったゲーム制作をしたい方向け、同時多発フリー制作チーム',
-      flavor: 'これは勢いでやっています。あと癖つよなお題が出ます。',
-      extraPoints: '都合が合わない方の別日参加も歓迎します。募集時に「●曜日etc参加チーム募集！」などと書くと良いと思います\n合意が取れていれば平日をフルに使ったチームがあっても良いのではないでしょうか、募集時に書くと良いと思います',
-      startAt: '2026-02-16T21:00',
-      endAt: '2026-02-20T21:00',
+      showTitle: false,
+      showDuration: true,
+      purpose: '',
+      concept: '',
+      flavor: '',
+      extraPoints: '普通のお題、文のようなお題、企画者の趣味のお題の3つを予定しています（こじつけでもOK）。普通のお題で制作してもらえれば普段のジャムとあまり変わりないかと思います',
+      startAt: '2026-09-04T20:00',
+      endAt: '2026-09-08T00:00',
       midnightAs24: true,
       latePolicy: 'ok',
-      lateDays: '3',
+      lateDays: '7',
       lateCustom: '',
-      lateFreeMove: false,
-      themeType: 'single',
-      themeText: '『ボイスを使って開発する』\n\n当日に『色々なセリフや効果音が入ったあすまろのボイスパック』をここで配布します。\n自前でボイスを録音して制作しても良いですし、まろボイスパックを使用しても◎',
-      themeSkipOk: false,
+      lateFreeMove: true,
+      themeType: 'multi',
+      themeText: '',
+      themeSkipOk: true,
       recRole: '',
       recJoinRole: '',
-      arrangeOk: true,
-      closeNote: false,
-      tips: true,
-      specialRules: 'まろボイスパックの使用可能範囲(現時点)\n①効果音への使用OK\n②作曲への使用OK\n③加工OK\n④まろジャム期間中のみ制作使用OK',
+      arrangeOk: false,
+      closeNote: true,
+      tips: false,
+      specialRules: '',
       prize: '',
-      scale: 'チームメンバーと相談の上、月曜日から金曜日までに完成させられる規模感！'
+      scale: '制作期間からして、おためしゲームジャム参加作品と同じぐらいの規模のゲームになるかと思います。過去のジャムの参加作品を遊んでみると分かりやすいかもしれません。制作期間が短めであり、また最終日が平日にかかることもあるため、かなりコンパクトなゲームになるかと思います。'
     };
     Object.keys(s).forEach(function (id) {
       var el = $(id);
