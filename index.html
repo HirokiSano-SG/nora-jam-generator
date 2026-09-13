@@ -240,6 +240,19 @@
       </fieldset>
 
       <fieldset>
+        <legend>提出方法</legend>
+        <div class="field">
+          <label for="submitChannelId">投稿先チャンネルID<span class="opt">任意</span></label>
+          <input type="text" id="submitChannelId" placeholder="例：1120228248777916476（#tu作品投稿所 のチャンネルID）">
+          <div class="hint">数字のチャンネルIDだけ入力。空欄なら「投稿所チャンネル」という言い方になります</div>
+        </div>
+        <div class="field">
+          <label class="check"><input type="checkbox" id="submitGuide" checked> TUDB（unity1week Team-Up!!データベース）での投稿手順ガイドを入れる</label>
+          <div class="hint">サイトリニューアル後の手順（Discordログイン→プロフィール紐付け→作品登録→投稿用Markdownをコピーして貼る）を要約して出します</div>
+        </div>
+      </fieldset>
+
+      <fieldset>
         <legend>参加方法・ロール</legend>
         <div class="field">
           <label for="recRole">募集を立てるのを推奨するロール<span class="opt">任意</span></label>
@@ -279,7 +292,7 @@
         <legend>その他</legend>
         <div class="field">
           <label for="specialRules">特殊ルール・追加の注意事項<span class="opt">任意</span></label>
-          <textarea id="specialRules" placeholder="1行につき1項目として「・」付きで出力されます。改行だけの空行を挟むと段落が分かれます。&#10;例：&#10;歌唱は必須ではないです。合成音声でもいいですし、歌唱なしでも成り立ちます。&#10;ボイスパックの使用可能範囲：効果音・作曲・加工OK、ジャム期間中のみ使用OK"></textarea>
+          <textarea id="specialRules" placeholder="書いた通りにそのまま出力されます（自動で箇条書きにはしません）。箇条書きにしたい行は自分で「・」を付けてください。&#10;例：&#10;・歌唱は必須ではないです。合成音声でもいいですし、歌唱なしでも成り立ちます。&#10;・ボイスパックの使用可能範囲：効果音・作曲・加工OK、ジャム期間中のみ使用OK"></textarea>
         </div>
         <div class="field">
           <label for="prize">参加賞<span class="opt">任意</span></label>
@@ -349,6 +362,7 @@
     'purpose', 'concept', 'flavor',
     'startAt', 'endAt', 'releaseAt', 'midnightAs24', 'latePolicy', 'lateDays', 'lateDaysExclude', 'lateCustom', 'lateFreeMove',
     'themeType', 'themeText', 'themeSkipOk',
+    'submitChannelId', 'submitGuide',
     'recRole', 'recJoinRole', 'arrangeOk', 'closeNote', 'teamTimesTag', 'tips',
     'specialRules', 'prize', 'scale'
   ];
@@ -492,6 +506,25 @@
     }
     out.push('');
 
+    // ---- 提出方法 ----
+    var submitChannelId = val('submitChannelId');
+    var submitGuide = checked('submitGuide');
+    if (submitChannelId || submitGuide) {
+      var channelMention = submitChannelId ? '<#' + submitChannelId + '>' : '投稿所チャンネル';
+      out.push('## 【提出方法】');
+      out.push('提出は' + channelMention + 'へ。TUDB（unity1week Team-Up!!データベース）の投稿ジェネレーターで作った投稿を貼ってください。');
+      if (submitGuide) {
+        out.push('');
+        out.push('1. https://u1wteamup.tsukumistudio.com/?tab=register でDiscordログイン');
+        out.push('2. TUDBプロフィールとDiscordアカウントを紐付け（要申請。初参加ならプロフィールを新規作成）');
+        out.push('3. 代表者が【作品登録】から情報を入力して登録');
+        out.push('4. 作品詳細画面の【投稿用Markdownをコピー】をスクリーンショットと一緒に' + channelMention + 'へ貼る');
+        out.push('');
+        out.push('代表者がTUDBプロフィールと紐付けしていれば登録できます。');
+      }
+      out.push('');
+    }
+
     // ---- 参加方法 ----
     out.push('## 【参加方法】');
     if (recRole) {
@@ -561,14 +594,9 @@
       out.push('・チームには' + recJoinRole + 'ロールの参加を推奨します。');
       out.push('');
     }
-    var special = lines(val('specialRules'));
-    if (special.some(Boolean)) {
-      var prevBlank = true;
-      special.forEach(function (l) {
-        if (l === '') { if (!prevBlank) out.push(''); prevBlank = true; return; }
-        out.push((prevBlank ? '・' : '') + l);
-        prevBlank = false;
-      });
+    var special = val('specialRules');
+    if (special) {
+      lines(special).forEach(function (l) { out.push(l); });
       out.push('');
     }
     var prize = val('prize');
@@ -681,6 +709,8 @@
       themeType: 'multi',
       themeText: '',
       themeSkipOk: true,
+      submitChannelId: '',
+      submitGuide: true,
       recRole: '',
       recJoinRole: '',
       arrangeOk: false,
