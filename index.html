@@ -82,6 +82,10 @@
     box-shadow: 0 0 0 3px var(--accent-soft);
   }
   textarea { resize: vertical; min-height: 70px; }
+  textarea#extraPoints { min-height: 100px; }
+  textarea#themeText { min-height: 150px; }
+  textarea#specialRules { min-height: 160px; }
+  textarea#scale { min-height: 90px; }
   .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
   .row > * { flex: 1; }
   .row .narrow { flex: 0 0 110px; }
@@ -129,7 +133,7 @@
 <body>
 <header>
   <h1>野良ジャム告知文ジェネレーター</h1>
-  <p>フォームを埋めて「生成」を押すと、Discordにそのまま貼れる告知文ができます</p>
+  <p>フォームを埋めると、右側の告知文がリアルタイムで更新されます</p>
 </header>
 
 <main>
@@ -151,8 +155,10 @@
         </div>
         <div class="field mention-list">
           <label>DiscordメンションID<span class="opt">任意</span></label>
-          <div class="hint">「イベントスレッド 企画者 &lt;@ID&gt;」の行を冒頭に出したい場合。数字のユーザーIDだけ入力（複数ならカンマ区切り）</div>
+          <div class="hint">「イベントスレッド 企画者 &lt;@ID&gt;」の行を冒頭に出したい場合。数字のユーザーIDだけ入力（複数ならカンマ区切り）。空欄でもOK（この行自体が出ません）</div>
           <input type="text" id="mentions" placeholder="例：1084023462055657614, 970688308910915647">
+          <div class="hint">ID取得には「開発者モード」を先にONにしてユーザーを右クリック→「IDをコピー」。やり方は
+            <a href="https://support.discord.com/hc/ja/articles/206346498-%E3%83%A6%E3%83%BC%E3%82%B6%E3%83%BC-%E3%82%B5%E3%83%BC%E3%83%90%E3%83%BC-%E3%83%A1%E3%83%83%E3%82%BB%E3%83%BC%E3%82%B8ID%E3%81%AF%E3%81%A9%E3%81%93%E3%81%AB%E3%81%82%E3%82%8A%E3%81%BE%E3%81%99%E3%81%8B" target="_blank" rel="noopener">Discord公式ガイド</a>を参照してください。</div>
         </div>
         <div class="field">
           <label class="check"><input type="checkbox" id="showTitle" checked> 冒頭に「# ○○ジャムを開催します！」の見出しを付ける</label>
@@ -235,12 +241,28 @@
         <legend>参加方法・ロール</legend>
         <div class="field">
           <label for="recRole">募集を立てるのを推奨するロール<span class="opt">任意</span></label>
-          <input type="text" id="recRole" placeholder="例：サウンド">
-          <div class="hint">「企画の特性上○○ロールが募集を立てることを推奨します」と出ます</div>
+          <select id="recRole">
+            <option value="">（指定なし）</option>
+            <option value="エンジニア">エンジニア</option>
+            <option value="アート">アート</option>
+            <option value="サウンド">サウンド</option>
+            <option value="シナリオ">シナリオ</option>
+            <option value="レベルデザイン">レベルデザイン</option>
+            <option value="その他">その他</option>
+          </select>
+          <div class="hint">「企画の特性上○○ロールが募集を立てることを推奨します」と出ます。選択肢はTUDBの公式ロールタグに準拠（<a href="https://u1wteamup.tsukumistudio.com/?tab=users&sort=name" target="_blank" rel="noopener">一覧</a>）</div>
         </div>
         <div class="field">
           <label for="recJoinRole">チームへの参加を推奨するロール<span class="opt">任意</span></label>
-          <input type="text" id="recJoinRole" placeholder="例：シナリオ">
+          <select id="recJoinRole">
+            <option value="">（指定なし）</option>
+            <option value="エンジニア">エンジニア</option>
+            <option value="アート">アート</option>
+            <option value="サウンド">サウンド</option>
+            <option value="シナリオ">シナリオ</option>
+            <option value="レベルデザイン">レベルデザイン</option>
+            <option value="その他">その他</option>
+          </select>
         </div>
         <div class="field">
           <label class="check"><input type="checkbox" id="arrangeOk" checked> 「期間や内容は自由にアレンジして構いません」を入れる</label>
@@ -266,7 +288,7 @@
       </fieldset>
 
       <div class="actions">
-        <button type="button" class="btn" id="generate">生成する</button>
+        <button type="button" class="btn" id="generate">再生成（通常は自動更新されます）</button>
         <button type="button" class="btn secondary" id="fillSample">サンプルを入れる</button>
         <button type="button" class="btn secondary" id="clearAll">クリア</button>
       </div>
@@ -284,7 +306,20 @@
         </div>
       </div>
       <p class="hint">Discordの投稿欄にそのまま貼れるMarkdownです。細かい言い回しは貼った後に自由に直してください。</p>
-      <textarea id="output" placeholder="ここに告知文が出ます。左のフォームを埋めて「生成する」を押してください。" spellcheck="false"></textarea>
+      <textarea id="output" placeholder="ここに告知文が出ます。左のフォームを埋めてください（自動で更新されます）。" spellcheck="false"></textarea>
+
+      <div class="output-head" style="margin-top:18px;">
+        <h2 style="margin-bottom:0; border:none; font-size:1rem;">応募フォーム用コピペ素材</h2>
+        <div class="row" style="flex:0 0 auto;">
+          <span id="copyStatus2"></span>
+          <button type="button" class="btn small secondary" id="copy2">コピー</button>
+        </div>
+      </div>
+      <p class="hint">
+        <a href="https://u1wteamup.tsukumistudio.com/?tab=jam-register" target="_blank" rel="noopener">TUDBのジャム登録フォーム</a>
+        に貼る用の要点まとめです（フォームはDiscordログイン必須のため、項目名の完全一致は保証できません。貼った後に該当欄へ振り分けてください）。
+      </p>
+      <textarea id="summary" style="min-height:180px;" spellcheck="false"></textarea>
     </div>
   </section>
 </main>
@@ -575,8 +610,33 @@
     return true;
   }
 
+  function buildSummary() {
+    var jam = val('jamName') || '（ジャム名未入力）';
+    var org = val('organizers') || '（企画者未入力）';
+    var start = formatDateTime(val('startAt'), false);
+    var end = formatDateTime(val('endAt'), checked('midnightAs24'));
+    var themeType = val('themeType');
+    var themeLabel = { none: 'なし', single: 'あり（1つ）', multi: '複数（1つ以上でOK）', reveal: '開始時に発表' }[themeType] || themeType;
+    var rows = [
+      ['ジャム名', jam],
+      ['企画者', org],
+      ['開始', start || '未入力'],
+      ['終了（提出締切）', end || '未入力'],
+      ['遅刻の扱い', lateText()],
+      ['お題の有無', themeLabel]
+    ];
+    if (val('themeText')) rows.push(['お題の内容', val('themeText').replace(/\n+/g, ' / ')]);
+    if (val('recRole')) rows.push(['募集を立てる推奨ロール', val('recRole')]);
+    if (val('recJoinRole')) rows.push(['参加を推奨するロール', val('recJoinRole')]);
+    if (val('prize')) rows.push(['参加賞', val('prize')]);
+    var scale = val('scale') || 'チームメンバーと相談の上で完成させられる規模感で作りましょう！';
+    rows.push(['ゲームの規模目安', scale.replace(/\n+/g, ' / ')]);
+    return rows.map(function (r) { return r[0] + '：' + r[1]; }).join('\n');
+  }
+
   function generate() {
     $('output').value = build();
+    $('summary').value = buildSummary();
     save();
   }
 
@@ -627,50 +687,42 @@
     syncVisibility();
   }
 
-  function copyOutput() {
-    var text = $('output').value;
-    if (!text) { generate(); text = $('output').value; }
-    var status = $('copyStatus');
+  function copyFrom(taId, statusId) {
+    var ta = $(taId);
+    var text = ta.value;
+    if (!text) { generate(); text = ta.value; }
+    var status = $(statusId);
     var done = function () {
       status.textContent = 'コピーしました';
       setTimeout(function () { status.textContent = ''; }, 2000);
     };
+    var fallback = function () {
+      ta.focus();
+      ta.select();
+      try { document.execCommand('copy'); } catch (e) { /* ignore */ }
+    };
     if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(done, function () { fallbackCopy(text); done(); });
+      navigator.clipboard.writeText(text).then(done, function () { fallback(); done(); });
     } else {
-      fallbackCopy(text);
+      fallback();
       done();
     }
-  }
-
-  function fallbackCopy(text) {
-    var ta = $('output');
-    ta.focus();
-    ta.select();
-    try { document.execCommand('copy'); } catch (e) { /* ignore */ }
   }
 
   // ---- 初期化 ----
   $('generate').addEventListener('click', generate);
   $('fillSample').addEventListener('click', fillSample);
   $('clearAll').addEventListener('click', clearAll);
-  $('copy').addEventListener('click', copyOutput);
+  $('copy').addEventListener('click', function () { copyFrom('output', 'copyStatus'); });
+  $('copy2').addEventListener('click', function () { copyFrom('summary', 'copyStatus2'); });
   $('latePolicy').addEventListener('change', syncVisibility);
   $('themeType').addEventListener('change', syncVisibility);
-  $('form').addEventListener('input', function () {
-    // 一度生成した後は入力に合わせてライブ更新
-    if ($('output').value) generate(); else save();
-  });
-  $('form').addEventListener('change', function () {
-    if ($('output').value) generate(); else save();
-  });
+  $('form').addEventListener('input', generate);
+  $('form').addEventListener('change', generate);
 
-  if (load()) {
-    syncVisibility();
-    if (val('jamName')) generate();
-  } else {
-    syncVisibility();
-  }
+  load();
+  syncVisibility();
+  generate();
 })();
 </script>
 </body>
