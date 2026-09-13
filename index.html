@@ -170,8 +170,8 @@
         <legend>趣旨・概要</legend>
         <div class="field">
           <label for="purpose">開催趣旨（ひとこと）<span class="req">必須</span></label>
-          <input type="text" id="purpose" placeholder="例：「平日5日間規模」でゲーム作ってみませんか！">
-          <div class="hint">「今回は○○という趣旨で企画しています」の○○に入ります</div>
+          <input type="text" id="purpose" placeholder="例：「魔法少女」をテーマに何か作ってみませんか？">
+          <div class="hint">「今回は○○」の○○に入ります。文末の句読点（？／！）は自分で付けてください</div>
         </div>
         <div class="field">
           <label for="concept">今回の企画をひとことで<span class="opt">任意</span></label>
@@ -181,7 +181,10 @@
         <div class="field">
           <label for="flavor">企画者のひとこと・補足（自由記述）<span class="opt">任意</span></label>
           <textarea id="flavor" placeholder="改行はそのまま反映されます。箇条書きにしたい行は自分で「・」を付けてください。&#10;例：&#10;・都合が合わない方の別日参加も歓迎します&#10;・合意が取れていれば平日をフルに使ったチームがあっても良いのではないでしょうか"></textarea>
-          <div class="hint">【概要】のお題の行の後に、書いた通りの改行でそのまま入ります（自動で箇条書きにはしません）</div>
+          <div class="hint">【概要】のお題の行の後に「**企画者より**」の小見出し付きで、書いた通りの改行でそのまま入ります（自動で箇条書きにはしません）</div>
+        </div>
+        <div class="field">
+          <label class="check"><input type="checkbox" id="funHealthNote" checked> 「コンテストではない」「無理しない・健康第一」の定型文を入れる</label>
         </div>
       </fieldset>
 
@@ -243,7 +246,8 @@
         <legend>提出方法</legend>
         <div class="field">
           <label for="submitChannelId">投稿先チャンネルID<span class="opt">任意</span></label>
-          <input type="text" id="submitChannelId" placeholder="例：1120228248777916476（#tu作品投稿所 のチャンネルID）">
+          <input type="text" id="submitChannelId" value="1120228248777916476" placeholder="例：1120228248777916476（#tu作品投稿所 のチャンネルID）">
+          <div class="hint">既定で #tu作品投稿所 のチャンネルIDを入れています。別チャンネルなら書き換えてください</div>
           <div class="hint">数字のチャンネルIDだけ入力。空欄なら「投稿所チャンネル」という言い方になります</div>
         </div>
         <div class="field">
@@ -359,7 +363,7 @@
 
   var FIELD_IDS = [
     'jamName', 'organizers', 'mentions', 'showTitle', 'showDuration',
-    'purpose', 'concept', 'flavor',
+    'purpose', 'concept', 'flavor', 'funHealthNote',
     'startAt', 'endAt', 'releaseAt', 'midnightAs24', 'latePolicy', 'lateDays', 'lateDaysExclude', 'lateCustom', 'lateFreeMove',
     'themeType', 'themeText', 'themeSkipOk',
     'submitChannelId', 'submitGuide',
@@ -454,12 +458,11 @@
 
     // ---- 野良ジャムとは ----
     out.push('## 【' + jam + 'とは？】');
-    out.push('サーバー内の有志が勝手に開催しているゲームジャム（短期間のゲーム制作イベント）です。');
-    var intro = 'unity1week Team-Up!!は、公式に「unity1week」(7日)に参加、「おたジャム」(3日)を開催していますが、';
+    var intro = 'unity1week Team-Up!!では、公式に「unity1week」（7日）と「おたジャム」（3日）が不定期開催されていますが、';
     if (purpose) {
-      intro += '今回は' + purpose + '\nという趣旨で' + org + '（' + (multiOrg ? 'どちらもTU参加者の一人' : 'TU参加者の一人') + '）が' + (multiOrg ? '共同企画' : '企画') + 'しています。';
+      intro += '今回は' + purpose;
     } else {
-      intro += '今回はそれとは別に' + org + '（' + (multiOrg ? 'どちらもTU参加者の一人' : 'TU参加者の一人') + '）が' + (multiOrg ? '共同企画' : '企画') + 'しています。';
+      intro += '今回は' + org + '（' + (multiOrg ? 'どちらもTU参加者の一人' : 'TU参加者の一人') + '）が' + (multiOrg ? '共同企画' : '企画') + 'しています。';
     }
     out.push(intro);
     out.push('');
@@ -481,9 +484,16 @@
       out.push('・今回はお題を決めない方向です。作りたいものを自由に作りましょう。');
     }
     var flavor = val('flavor');
-    if (flavor) lines(flavor).forEach(function (l) { out.push(l); });
-    out.push('・コンテストではないので、楽しく、緩くやりましょう。');
-    out.push('・開催期間中の「無理はしない（徹夜しない、ご飯食べる）」は義務です！健康第一で！！');
+    if (flavor) {
+      out.push('');
+      out.push('**企画者より**');
+      lines(flavor).forEach(function (l) { out.push(l); });
+    }
+    if (checked('funHealthNote')) {
+      out.push('');
+      out.push('・コンテストではないので、楽しく、緩くやりましょう。');
+      out.push('・開催期間中の「無理はしない（徹夜しない、ご飯食べる）」は義務です！健康第一で！！');
+    }
     out.push('');
 
     // ---- スケジュール ----
@@ -513,9 +523,10 @@
       var channelMention = submitChannelId ? '<#' + submitChannelId + '>' : '投稿所チャンネル';
       out.push('## 【提出方法】');
       out.push('提出は' + channelMention + 'へ。TUDB（unity1week Team-Up!!データベース）の投稿ジェネレーターで作った投稿を貼ってください。');
+      out.push('https://u1wteamup.tsukumistudio.com/?tab=register');
       if (submitGuide) {
         out.push('');
-        out.push('1. https://u1wteamup.tsukumistudio.com/?tab=register でDiscordログイン');
+        out.push('1. サイト右上からDiscordログイン');
         out.push('2. TUDBプロフィールとDiscordアカウントを紐付け（要申請。初参加ならプロフィールを新規作成）');
         out.push('3. 代表者が【作品登録】から情報を入力して登録');
         out.push('4. 作品詳細画面の【投稿用Markdownをコピー】をスクリーンショットと一緒に' + channelMention + 'へ貼る');
@@ -697,6 +708,7 @@
       purpose: '',
       concept: '',
       flavor: '・普通のお題、文のようなお題、企画者の趣味のお題の3つを予定しています（こじつけでもOK）\n・普通のお題で制作してもらえれば普段のジャムとあまり変わりないかと思います',
+      funHealthNote: true,
       startAt: '2026-09-04T20:00',
       endAt: '2026-09-08T00:00',
       releaseAt: '',
@@ -709,7 +721,7 @@
       themeType: 'multi',
       themeText: '',
       themeSkipOk: true,
-      submitChannelId: '',
+      submitChannelId: '1120228248777916476',
       submitGuide: true,
       recRole: '',
       recJoinRole: '',
