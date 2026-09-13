@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>野良ジャム告知文ジェネレーター - TU非公式</title>
+<meta name="description" content="unity1week Team-Up!!（TU）の野良ジャム告知文を、フォーム入力から自動生成する非公式ツール">
+<style>
+  :root {
+    --bg: #f6f7fb;
+    --card: #ffffff;
+    --text: #2b2d31;
+    --sub: #6b7280;
+    --line: #e3e5ea;
+    --accent: #5865f2;
+    --accent-dark: #4752c4;
+    --accent-soft: #eef0ff;
+    --ok: #2f9e6b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", Meiryo, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+  }
+  header {
+    background: var(--accent);
+    color: #fff;
+    padding: 28px 16px 22px;
+    text-align: center;
+  }
+  header h1 { margin: 0 0 6px; font-size: 1.5rem; letter-spacing: .02em; }
+  header p { margin: 0; opacity: .92; font-size: .95rem; }
+  main {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 20px 16px 40px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 860px) { main { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .card h2 {
+    margin: 0 0 12px;
+    font-size: 1.1rem;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--accent-soft);
+  }
+  fieldset {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px 14px 6px;
+    margin: 0 0 16px;
+  }
+  legend { font-weight: 700; color: var(--accent-dark); padding: 0 6px; font-size: .95rem; }
+  .field { margin-bottom: 12px; }
+  label { display: block; font-weight: 600; font-size: .9rem; margin-bottom: 4px; }
+  label .req { color: #d9534f; font-size: .8rem; margin-left: 4px; }
+  label .opt { color: var(--sub); font-weight: 400; font-size: .8rem; margin-left: 4px; }
+  .hint { font-size: .8rem; color: var(--sub); margin: 2px 0 4px; }
+  input[type=text], input[type=datetime-local], input[type=number], textarea, select {
+    width: 100%;
+    font: inherit;
+    font-size: .95rem;
+    padding: 8px 10px;
+    border: 1px solid #cfd3da;
+    border-radius: 8px;
+    background: #fff;
+    color: var(--text);
+  }
+  input:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+  textarea { resize: vertical; min-height: 70px; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .row > * { flex: 1; }
+  .row .narrow { flex: 0 0 110px; }
+  .check { display: flex; align-items: center; gap: 6px; font-weight: 400; font-size: .9rem; }
+  .check input { width: auto; }
+  .btn {
+    font: inherit;
+    font-weight: 700;
+    padding: 10px 18px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    background: var(--accent);
+    color: #fff;
+    transition: background .15s;
+  }
+  .btn:hover { background: var(--accent-dark); }
+  .btn.secondary { background: #fff; color: var(--accent-dark); border: 1px solid var(--accent); }
+  .btn.secondary:hover { background: var(--accent-soft); }
+  .btn.small { padding: 6px 12px; font-size: .85rem; font-weight: 600; }
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+  .output-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+  #output {
+    width: 100%;
+    min-height: 520px;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: .88rem;
+    line-height: 1.55;
+    white-space: pre-wrap;
+    background: #f9fafc;
+  }
+  #copyStatus { color: var(--ok); font-size: .85rem; font-weight: 600; min-width: 6em; }
+  .sticky { position: sticky; top: 16px; }
+  .note { font-size: .8rem; color: var(--sub); margin-top: 10px; }
+  footer {
+    text-align: center;
+    color: var(--sub);
+    font-size: .78rem;
+    padding: 12px 16px 28px;
+  }
+  footer a { color: var(--sub); }
+  .mention-list .row { margin-bottom: 6px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>野良ジャム告知文ジェネレーター</h1>
+  <p>フォームを埋めて「生成」を押すと、Discordにそのまま貼れる告知文ができます</p>
+</header>
+
+<main>
+  <section class="card">
+    <h2>入力フォーム</h2>
+    <form id="form" onsubmit="return false;">
+
+      <fieldset>
+        <legend>基本情報</legend>
+        <div class="field">
+          <label for="jamName">ジャム名<span class="req">必須</span></label>
+          <input type="text" id="jamName" placeholder="例：まろジャム、主題歌ジャム、野良ジャム">
+          <div class="hint">募集タイトルに付けるタグ【○○ジャム】にも使われます</div>
+        </div>
+        <div class="field">
+          <label for="organizers">企画者名<span class="req">必須</span></label>
+          <input type="text" id="organizers" placeholder="例：あすまろ　／　複数なら「m o g u・雨部冷キザミ」のように「・」区切り">
+          <div class="hint">本文中の「企画者（○○）」に入ります。2人以上なら「共同企画」の表記になります</div>
+        </div>
+        <div class="field mention-list">
+          <label>DiscordメンションID<span class="opt">任意</span></label>
+          <div class="hint">「イベントスレッド 企画者 &lt;@ID&gt;」の行を冒頭に出したい場合。数字のユーザーIDだけ入力（複数ならカンマ区切り）</div>
+          <input type="text" id="mentions" placeholder="例：1084023462055657614, 970688308910915647">
+        </div>
+        <div class="field">
+          <label class="check"><input type="checkbox" id="showTitle" checked> 冒頭に「# ○○ジャムを開催します！」の見出しを付ける</label>
+          <label class="check"><input type="checkbox" id="showDuration" checked> 冒頭に「○/○の○時から○/○の○時までの○日間のゲームジャムとなります」の一文を付ける</label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>趣旨・概要</legend>
+        <div class="field">
+          <label for="purpose">開催趣旨（ひとこと）<span class="req">必須</span></label>
+          <input type="text" id="purpose" placeholder="例：「平日5日間規模」でゲーム作ってみませんか！">
+          <div class="hint">「今回は○○という趣旨で企画しています」の○○に入ります</div>
+        </div>
+        <div class="field">
+          <label for="concept">今回の企画をひとことで<span class="opt">任意</span></label>
+          <input type="text" id="concept" placeholder="例：平日作業できる人向け、ボイスで効果音や曲を使ったゲーム制作をしたい方向け、同時多発フリー制作チーム">
+          <div class="hint">概要の1行目「・今回は「○○」の企画です」に入ります</div>
+        </div>
+        <div class="field">
+          <label for="flavor">企画者のひとこと・補足<span class="opt">任意</span></label>
+          <input type="text" id="flavor" placeholder="例：これは勢いでやっています。あと癖つよなお題が出ます。">
+          <div class="hint">趣旨の直後に添える自由なひとこと</div>
+        </div>
+        <div class="field">
+          <label for="extraPoints">概要に足したい箇条書き<span class="opt">任意</span></label>
+          <textarea id="extraPoints" placeholder="1行につき1項目。例：&#10;都合が合わない方の別日参加も歓迎します&#10;合意が取れていれば平日をフルに使ったチームがあっても良いのではないでしょうか"></textarea>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>スケジュール</legend>
+        <div class="field">
+          <label for="startAt">開始日時<span class="req">必須</span></label>
+          <input type="datetime-local" id="startAt">
+        </div>
+        <div class="field">
+          <label for="endAt">終了日時（提出締切）<span class="req">必須</span></label>
+          <input type="datetime-local" id="endAt">
+          <div class="hint">「24時終了」にしたい場合は翌日の0:00を選んで、下のチェックを入れてください</div>
+          <label class="check"><input type="checkbox" id="midnightAs24" checked> 0時は「前日の24時」として表記する</label>
+        </div>
+        <div class="field">
+          <label for="latePolicy">遅刻の扱い<span class="req">必須</span></label>
+          <div class="row">
+            <select id="latePolicy">
+              <option value="ok">遅刻OK</option>
+              <option value="days">N日まで遅刻OK（それ以降は参加作品扱いしない）</option>
+              <option value="no">遅刻不可</option>
+              <option value="custom">自由記述</option>
+            </select>
+            <input type="number" id="lateDays" class="narrow" min="1" value="3" placeholder="日数" style="display:none">
+          </div>
+          <input type="text" id="lateCustom" placeholder="例：遅刻は1週間まで" style="display:none; margin-top:6px">
+          <label class="check" id="lateFreeMoveWrap"><input type="checkbox" id="lateFreeMove"> 「終了から1週間ほど経ちそうならフリーへ移行推奨」の一文を足す</label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>お題</legend>
+        <div class="field">
+          <label for="themeType">お題の有無</label>
+          <select id="themeType">
+            <option value="none">お題なし（自由制作）</option>
+            <option value="single">お題あり（1つ）</option>
+            <option value="multi">お題が複数（1つ以上満たせばOK）</option>
+            <option value="reveal">お題は開始時に発表</option>
+          </select>
+        </div>
+        <div class="field" id="themeTextWrap">
+          <label for="themeText">お題の内容・説明<span class="opt">任意</span></label>
+          <textarea id="themeText" placeholder="例：『ボイスを使って開発する』&#10;当日に『色々なセリフや効果音が入ったボイスパック』をここで配布します。&#10;&#10;お題なしの場合は「お題を決めない理由」を書いてもOK"></textarea>
+        </div>
+        <div class="field" id="themeSkipWrap">
+          <label class="check"><input type="checkbox" id="themeSkipOk" checked> 「どうしても沿えない場合はお題を無視してOK（推奨はしない）」の注意書きを入れる</label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>参加方法・ロール</legend>
+        <div class="field">
+          <label for="recRole">募集を立てるのを推奨するロール<span class="opt">任意</span></label>
+          <input type="text" id="recRole" placeholder="例：サウンド">
+          <div class="hint">「企画の特性上○○ロールが募集を立てることを推奨します」と出ます</div>
+        </div>
+        <div class="field">
+          <label for="recJoinRole">チームへの参加を推奨するロール<span class="opt">任意</span></label>
+          <input type="text" id="recJoinRole" placeholder="例：シナリオ">
+        </div>
+        <div class="field">
+          <label class="check"><input type="checkbox" id="arrangeOk" checked> 「期間や内容は自由にアレンジして構いません」を入れる</label>
+          <label class="check"><input type="checkbox" id="closeNote" checked> 結成所の投稿クローズ手順の注意を入れる</label>
+          <label class="check"><input type="checkbox" id="tips" checked> 【Tips】（マッチングのコツ）ブロックを入れる</label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>その他</legend>
+        <div class="field">
+          <label for="specialRules">特殊ルール・追加の注意事項<span class="opt">任意</span></label>
+          <textarea id="specialRules" placeholder="1行につき1項目として「・」付きで出力されます。改行だけの空行を挟むと段落が分かれます。&#10;例：&#10;歌唱は必須ではないです。合成音声でもいいですし、歌唱なしでも成り立ちます。&#10;ボイスパックの使用可能範囲：効果音・作曲・加工OK、ジャム期間中のみ使用OK"></textarea>
+        </div>
+        <div class="field">
+          <label for="prize">参加賞<span class="opt">任意</span></label>
+          <input type="text" id="prize" placeholder="例：もぐポイントを進呈します。遅刻せず投稿できた場合はボーナスポイント。使い道は特にないです。">
+        </div>
+        <div class="field">
+          <label for="scale">ゲームの規模の目安<span class="opt">任意</span></label>
+          <textarea id="scale" placeholder="空欄なら「チームメンバーと相談の上で完成させられる規模感で作りましょう！」になります"></textarea>
+        </div>
+      </fieldset>
+
+      <div class="actions">
+        <button type="button" class="btn" id="generate">生成する</button>
+        <button type="button" class="btn secondary" id="fillSample">サンプルを入れる</button>
+        <button type="button" class="btn secondary" id="clearAll">クリア</button>
+      </div>
+      <div class="note">入力内容はこのブラウザに自動保存されます（サーバーには送りません）。</div>
+    </form>
+  </section>
+
+  <section class="card">
+    <div class="sticky">
+      <div class="output-head">
+        <h2 style="margin-bottom:0; border:none;">生成結果</h2>
+        <div class="row" style="flex:0 0 auto;">
+          <span id="copyStatus"></span>
+          <button type="button" class="btn small" id="copy">コピー</button>
+        </div>
+      </div>
+      <p class="hint">Discordの投稿欄にそのまま貼れるMarkdownです。細かい言い回しは貼った後に自由に直してください。</p>
+      <textarea id="output" placeholder="ここに告知文が出ます。左のフォームを埋めて「生成する」を押してください。" spellcheck="false"></textarea>
+    </div>
+  </section>
+</main>
+
+<footer>
+  unity1week Team-Up!!（TU）コミュニティ向けの非公式ツールです。TU運営とは関係ありません。<br>
+  過去の野良ジャム告知文（野良ジャム・まろジャム・主題歌ジャム）を参考に作られています。
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  var FIELD_IDS = [
+    'jamName', 'organizers', 'mentions', 'showTitle', 'showDuration',
+    'purpose', 'concept', 'flavor', 'extraPoints',
+    'startAt', 'endAt', 'midnightAs24', 'latePolicy', 'lateDays', 'lateCustom', 'lateFreeMove',
+    'themeType', 'themeText', 'themeSkipOk',
+    'recRole', 'recJoinRole', 'arrangeOk', 'closeNote', 'tips',
+    'specialRules', 'prize', 'scale'
+  ];
+  var STORAGE_KEY = 'noraJamGenerator.v1';
+  var WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
+
+  function val(id) { return $(id).value.trim(); }
+  function checked(id) { return $(id).checked; }
+  function lines(text) {
+    return text.split(/\r?\n/).map(function (s) { return s.trim(); });
+  }
+  function nonEmptyLines(text) {
+    return lines(text).filter(function (s) { return s !== ''; });
+  }
+
+  // 「9/4（金）20時」形式に整形。0:00 かつ midnightAs24 なら前日の24時表記。
+  function formatDateTime(value, midnightAs24) {
+    if (!value) return '';
+    var d = new Date(value);
+    if (isNaN(d.getTime())) return '';
+    var hour = d.getHours();
+    var minute = d.getMinutes();
+    if (hour === 0 && minute === 0 && midnightAs24) {
+      d = new Date(d.getTime() - 24 * 60 * 60 * 1000);
+      hour = 24;
+    }
+    var time = hour + '時' + (minute ? String(minute).padStart(2, '0') + '分' : '');
+    return (d.getMonth() + 1) + '/' + d.getDate() + '（' + WEEKDAYS[d.getDay()] + '）' + time;
+  }
+
+  // 「ほぼ3日間」「5日間」のような期間の言い方（見出し行用）
+  function describeDuration(startValue, endValue) {
+    if (!startValue || !endValue) return '';
+    var s = new Date(startValue), e = new Date(endValue);
+    if (isNaN(s.getTime()) || isNaN(e.getTime()) || e <= s) return '';
+    var hours = (e - s) / 36e5;
+    var days = hours / 24;
+    if (days < 1) return Math.round(hours) + '時間';
+    var whole = Math.floor(days);
+    var frac = days - whole;
+    if (frac < 0.05) return whole + '日間';
+    if (frac < 0.3) return 'ほぼ' + whole + '日間';
+    if (frac > 0.7) return 'ほぼ' + (whole + 1) + '日間';
+    return '約' + whole + '日半';
+  }
+
+  function lateText() {
+    var p = val('latePolicy');
+    if (p === 'ok') return '遅刻OK';
+    if (p === 'days') {
+      var n = parseInt(val('lateDays'), 10) || 1;
+      return '遅刻は' + n + '日まで、それを過ぎて投稿されたものはジャム参加作品としては扱いません';
+    }
+    if (p === 'no') return '遅刻不可';
+    return val('lateCustom') || '遅刻の扱いは要確認';
+  }
+
+  function build() {
+    var jam = val('jamName') || '○○ジャム';
+    var org = val('organizers') || '企画者';
+    var orgList = org.split(/[・,、\/／]/).map(function (s) { return s.trim(); }).filter(Boolean);
+    var multiOrg = orgList.length >= 2;
+    var mentionIds = val('mentions').split(/[,、\s]+/).filter(function (s) { return /^\d+$/.test(s); });
+
+    var purpose = val('purpose');
+    var themeType = val('themeType');
+    var hasTheme = themeType !== 'none';
+    var themeText = val('themeText');
+    var start = formatDateTime(val('startAt'), false);
+    var end = formatDateTime(val('endAt'), checked('midnightAs24'));
+    var duration = describeDuration(val('startAt'), val('endAt'));
+    var recRole = val('recRole');
+    var recJoinRole = val('recJoinRole');
+    var out = [];
+
+    // ---- 冒頭 ----
+    if (checked('showTitle')) {
+      out.push('# ' + jam + 'を開催します！');
+    }
+    if (mentionIds.length) {
+      out.push('イベントスレッド 企画者 ' + mentionIds.map(function (id) { return '<@' + id + '>'; }).join(' '));
+    }
+    if (checked('showDuration') && start && end) {
+      out.push(start + 'から' + end + 'まで' + (duration ? 'の' + duration : '') + 'のゲームジャムとなります。');
+    }
+    if (themeType === 'multi') {
+      out.push('また、お題が複数存在します（1つでも満たせばOK）');
+    }
+    out.push('');
+
+    // ---- 野良ジャムとは ----
+    out.push('## 【野良ジャムとは？】');
+    out.push('サーバー内の有志が勝手に開催しているゲームジャム（短期間のゲーム制作イベント）です。');
+    var intro = 'unity1week Team-Up!!は、公式に「unity1week」(7日)に参加、「おたジャム」(3日)を開催していますが、';
+    if (purpose) {
+      intro += '今回は' + purpose + '\nという趣旨で' + org + '（' + (multiOrg ? 'どちらもTU参加者の一人' : 'TU参加者の一人') + '）が' + (multiOrg ? '共同企画' : '企画') + 'しています。';
+    } else {
+      intro += '今回はそれとは別に' + org + '（' + (multiOrg ? 'どちらもTU参加者の一人' : 'TU参加者の一人') + '）が' + (multiOrg ? '共同企画' : '企画') + 'しています。';
+    }
+    var flavor = val('flavor');
+    if (flavor) intro += '\n' + flavor;
+    out.push(intro);
+    out.push('');
+    out.push('TUサーバー内の扱いとしては「フリー募集の制作チーム」となります。');
+    out.push('企画者（' + org + '）に連絡を取る必要はなく、誰でも自由に参加できます。このチャンネルに参加表明をする必要もありません。');
+    out.push('');
+
+    // ---- 概要 ----
+    out.push('## 【概要】');
+    var concept = val('concept');
+    if (concept) out.push('・今回は「' + concept + '」の企画です。');
+    if (themeType === 'multi') {
+      out.push('・お題が複数出ますが、1つ以上満たせばOKです（こじつけでもOK）。好きなお題でゲームを作りましょう。');
+    } else if (themeType === 'single') {
+      out.push('・お題があります。お題に沿ってゲームを作りましょう（こじつけでもOK）。');
+    } else if (themeType === 'reveal') {
+      out.push('・お題は制作開始時に発表します。お題発表後にチームを組むことも可能です。');
+    } else {
+      out.push('・今回はお題を決めない方向です。作りたいものを自由に作りましょう。');
+    }
+    nonEmptyLines(val('extraPoints')).forEach(function (l) { out.push('・' + l); });
+    out.push('・コンテストではないので、楽しく、緩くやりましょう。');
+    out.push('・開催期間中の「無理はしない（徹夜しない、ご飯食べる）」は義務です！健康第一で！！');
+    out.push('');
+
+    // ---- スケジュール ----
+    out.push('## 【スケジュール】');
+    out.push((start || '開始日時未定') + '：' + (themeType === 'reveal' || themeType === 'multi' ? 'お題発表、制作開始' : '制作開始'));
+    out.push((end || '終了日時未定') + '：提出、unityroomで公開しましょう（' + lateText() + '）');
+    out.push('');
+    out.push('公開後は他チームのゲームを遊んでみたり、自分の個人Timesに感想を書いてみるのがおすすめです。');
+    out.push('今後、作ってみたいゲームや、組んでみたい人が見つかるきっかけになります！');
+    out.push('unityroom側の評価も忘れずに。');
+    if (checked('lateFreeMove')) {
+      out.push('');
+      out.push('遅刻はOKとさせていただきますが、終了から1週間ほど経ちそうならばフリーへと移行してもらったほうが良いかもしれません。');
+    }
+    out.push('');
+
+    // ---- 参加方法 ----
+    out.push('## 【参加方法】');
+    if (recRole) {
+      out.push('通常のフリー募集と同じですが、企画の特性上' + recRole + 'ロールが募集を立てることを推奨します。');
+    } else {
+      out.push('通常のフリー募集と同じです。');
+    }
+    out.push('「チーム結成所」で募集を立てるか、既存の募集にリアクションしてください。');
+    out.push('交流のある方に声を掛けてチームを組んでみるのも面白いのではないでしょうか。');
+    if (themeType === 'reveal' || themeType === 'multi') {
+      out.push('お題発表後にチームを組むことも可能です。');
+    }
+    out.push('');
+    out.push('**（募集する方へ）**');
+    out.push('・タイトルに【' + jam + '】と付けておくと分かりやすくなります。募集所ではフリーのタグ、募集するロールのタグを付けておくと良いでしょう。');
+    if (checked('arrangeOk')) out.push('・期間や内容は自由にアレンジして構いません。');
+    if (checked('closeNote')) {
+      out.push('・募集が終わったら結成所の投稿はクローズしましょう。クローズをしなければ募集中の投稿と混ざってしまいます。投稿タイトルに〆や終了とつけるだけではなく、投稿上部の…から「投稿をクローズ」を選択することでクローズできます。');
+    }
+    out.push('・チームTimesには' + jam + 'のタグを付けておくと良いでしょう。');
+    out.push('');
+    out.push('**（応募する方へ）**');
+    out.push('・募集主により、開催日・スタンス・得意分野・作風が大きく異なります。');
+    out.push('募集内容をしっかり確認し、自分と相性の良さそうな方を探しましょう。ポートフォリオや個人Times、過去作のチェックが有効です！');
+    out.push('・ポートフォリオや個人Timesを募集所の投稿に書き込むことで、募集する方に作風や人柄を知ってもらいやすくなります。');
+    out.push('');
+
+    // ---- Tips ----
+    if (checked('tips')) {
+      out.push('## 【Tips】');
+      out.push('募集主さんも応募者さんも、自分のスタンスを明確にしていると、よりよいマッチングが期待できます。');
+      out.push('');
+      out.push('ポートフォリオはスキルのアピールとして非常に有効ですが、');
+      out.push('ゲームジャムは「即席メンバーでみんなが楽しくゲームを作れるといいな～」というお祭りなので、');
+      out.push('ポートフォリオでのできることアピールのほかに、');
+      out.push('・「自分の個人Timesに好きなゲームや、好きなTUのゲームを書いてみる」');
+      out.push('・「今回はこういうことをやってみたい！という希望を、自分の個人Timesや募集・応募文に書いてみる」');
+      out.push('・「応募・募集前に、相手の過去作品をしっかり確認する」');
+      out.push('など、やりたいことを明確にアピールすると自分と相性のいい方と組みやすくなると思います！');
+      out.push('');
+    }
+
+    // ---- その他・注意事項 ----
+    out.push('## 【その他・注意事項】');
+    out.push('・企画者（' + org + '）について');
+    out.push('企画者は各チームの制作物に対して制限をかけること、権利の主張、チーム内トラブルへの関与はしません。');
+    out.push('あくまで今回のジャムを企画しただけの人間です。ほとんどの参加者の方とは連絡を取ることもありません。');
+    out.push('');
+    if (hasTheme || themeText) {
+      out.push('・お題について');
+      if (themeText) {
+        lines(themeText).forEach(function (l) { out.push(l); });
+      }
+      if (hasTheme && checked('themeSkipOk')) {
+        out.push('どうしてもお題に沿ったゲームを作れない、という場合、お題を無視しても大丈夫ですが、あまり推奨はされません。');
+        out.push('「この期間で制作はしたいけど、お題に縛られたくない」という場合は最初からフリー募集として結成所に投稿を作る方が良いかと思われます。');
+      }
+      out.push('');
+    }
+    if (recRole) {
+      out.push('・' + recRole + 'ロールが募集を立てることを推奨します。');
+      out.push('');
+    }
+    if (recJoinRole) {
+      out.push('・チームには' + recJoinRole + 'ロールの参加を推奨します。');
+      out.push('');
+    }
+    var special = lines(val('specialRules'));
+    if (special.some(Boolean)) {
+      var prevBlank = true;
+      special.forEach(function (l) {
+        if (l === '') { if (!prevBlank) out.push(''); prevBlank = true; return; }
+        out.push((prevBlank ? '・' : '') + l);
+        prevBlank = false;
+      });
+      out.push('');
+    }
+    var prize = val('prize');
+    if (prize) {
+      out.push('・参加賞について');
+      out.push(prize);
+      out.push('');
+    }
+
+    // ---- ゲームの規模 ----
+    out.push('## 【ゲームの規模】');
+    var scale = val('scale');
+    if (scale) {
+      lines(scale).forEach(function (l) { out.push(l); });
+    } else {
+      out.push('チームメンバーと相談の上で完成させられる規模感で作りましょう！');
+    }
+
+    // 連続する空行を1つにまとめ、末尾の空行を落とす
+    var text = out.join('\n').replace(/\n{3,}/g, '\n\n').replace(/\s+$/, '');
+    return text;
+  }
+
+  // ---- UI 連動 ----
+  function syncVisibility() {
+    var p = val('latePolicy');
+    $('lateDays').style.display = p === 'days' ? '' : 'none';
+    $('lateCustom').style.display = p === 'custom' ? '' : 'none';
+    $('lateFreeMoveWrap').style.display = p === 'ok' ? '' : 'none';
+    var t = val('themeType');
+    $('themeSkipWrap').style.display = t === 'none' ? 'none' : '';
+  }
+
+  function save() {
+    var data = {};
+    FIELD_IDS.forEach(function (id) {
+      var el = $(id);
+      data[id] = el.type === 'checkbox' ? el.checked : el.value;
+    });
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (e) { /* ignore */ }
+  }
+
+  function load() {
+    var raw = null;
+    try { raw = localStorage.getItem(STORAGE_KEY); } catch (e) { /* ignore */ }
+    if (!raw) return false;
+    var data;
+    try { data = JSON.parse(raw); } catch (e) { return false; }
+    FIELD_IDS.forEach(function (id) {
+      if (!(id in data)) return;
+      var el = $(id);
+      if (el.type === 'checkbox') el.checked = !!data[id]; else el.value = data[id];
+    });
+    return true;
+  }
+
+  function generate() {
+    $('output').value = build();
+    save();
+  }
+
+  function fillSample() {
+    var s = {
+      jamName: 'まろジャム',
+      organizers: 'あすまろ',
+      mentions: '',
+      showTitle: true,
+      showDuration: false,
+      purpose: '「平日5日間規模」でゲーム作ってみませんか！',
+      concept: '平日作業できる人向け、ボイスで効果音や曲を使ったゲーム制作をしたい方向け、同時多発フリー制作チーム',
+      flavor: 'これは勢いでやっています。あと癖つよなお題が出ます。',
+      extraPoints: '都合が合わない方の別日参加も歓迎します。募集時に「●曜日etc参加チーム募集！」などと書くと良いと思います\n合意が取れていれば平日をフルに使ったチームがあっても良いのではないでしょうか、募集時に書くと良いと思います',
+      startAt: '2026-02-16T21:00',
+      endAt: '2026-02-20T21:00',
+      midnightAs24: true,
+      latePolicy: 'ok',
+      lateDays: '3',
+      lateCustom: '',
+      lateFreeMove: false,
+      themeType: 'single',
+      themeText: '『ボイスを使って開発する』\n\n当日に『色々なセリフや効果音が入ったあすまろのボイスパック』をここで配布します。\n自前でボイスを録音して制作しても良いですし、まろボイスパックを使用しても◎',
+      themeSkipOk: false,
+      recRole: '',
+      recJoinRole: '',
+      arrangeOk: true,
+      closeNote: false,
+      tips: true,
+      specialRules: 'まろボイスパックの使用可能範囲(現時点)\n①効果音への使用OK\n②作曲への使用OK\n③加工OK\n④まろジャム期間中のみ制作使用OK',
+      prize: '',
+      scale: 'チームメンバーと相談の上、月曜日から金曜日までに完成させられる規模感！'
+    };
+    Object.keys(s).forEach(function (id) {
+      var el = $(id);
+      if (!el) return;
+      if (el.type === 'checkbox') el.checked = !!s[id]; else el.value = s[id];
+    });
+    syncVisibility();
+    generate();
+  }
+
+  function clearAll() {
+    if (!confirm('入力内容をすべて消しますか？')) return;
+    $('form').reset();
+    $('output').value = '';
+    try { localStorage.removeItem(STORAGE_KEY); } catch (e) { /* ignore */ }
+    syncVisibility();
+  }
+
+  function copyOutput() {
+    var text = $('output').value;
+    if (!text) { generate(); text = $('output').value; }
+    var status = $('copyStatus');
+    var done = function () {
+      status.textContent = 'コピーしました';
+      setTimeout(function () { status.textContent = ''; }, 2000);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, function () { fallbackCopy(text); done(); });
+    } else {
+      fallbackCopy(text);
+      done();
+    }
+  }
+
+  function fallbackCopy(text) {
+    var ta = $('output');
+    ta.focus();
+    ta.select();
+    try { document.execCommand('copy'); } catch (e) { /* ignore */ }
+  }
+
+  // ---- 初期化 ----
+  $('generate').addEventListener('click', generate);
+  $('fillSample').addEventListener('click', fillSample);
+  $('clearAll').addEventListener('click', clearAll);
+  $('copy').addEventListener('click', copyOutput);
+  $('latePolicy').addEventListener('change', syncVisibility);
+  $('themeType').addEventListener('change', syncVisibility);
+  $('form').addEventListener('input', function () {
+    // 一度生成した後は入力に合わせてライブ更新
+    if ($('output').value) generate(); else save();
+  });
+  $('form').addEventListener('change', function () {
+    if ($('output').value) generate(); else save();
+  });
+
+  if (load()) {
+    syncVisibility();
+    if (val('jamName')) generate();
+  } else {
+    syncVisibility();
+  }
+})();
+</script>
+</body>
+</html>
