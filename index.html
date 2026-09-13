@@ -320,6 +320,11 @@
         に貼る用の要点まとめです（フォームはDiscordログイン必須のため、項目名の完全一致は保証できません。貼った後に該当欄へ振り分けてください）。
       </p>
       <textarea id="summary" style="min-height:180px;" spellcheck="false"></textarea>
+
+      <div id="tumanEgg" style="display:none; text-align:center; margin-top:16px;">
+        <img src="assets/tuman.png" alt="TUマン（非公式・落選デザイン案）" style="max-width:220px; border-radius:12px; border:1px solid var(--line);">
+        <p class="hint">企画者に「TUマン」って書いたな？　公式マスコットは「TUちゃん」だ、覚えとけ。</p>
+      </div>
     </div>
   </section>
 </main>
@@ -637,6 +642,7 @@
   function generate() {
     $('output').value = build();
     $('summary').value = buildSummary();
+    $('tumanEgg').style.display = /TU\s*マン/.test(val('organizers') + val('jamName')) ? '' : 'none';
     save();
   }
 
